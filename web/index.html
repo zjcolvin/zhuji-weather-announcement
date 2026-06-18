@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诸暨市气象监测平台 | Meteoblue Style</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-decorations">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- 头部导航栏 -->
+        <header class="main-header">
+            <div class="logo-area">
+                <i data-lucide="cloud-lightning" class="header-logo-icon"></i>
+                <div class="title-group">
+                    <h1>诸暨市多源气象融合监测系统</h1>
+                    <span class="sub-title">Zhuji Weather Fusion Monitor</span>
+                </div>
+            </div>
+            <div class="status-panel">
+                <span class="location-badge">
+                    <i data-lucide="map-pin"></i> 中国诸暨 (29.71°N, 120.23°E)
+                </span>
+                <span class="source-badge">
+                    <span class="status-dot pulsing"></span>
+                    <span id="data-source-text">Meteoblue 融合引擎</span>
+                </span>
+                <span class="time-badge" id="current-time-badge">
+                    00:00:00
+                </span>
+            </div>
+        </header>
+
+        <!-- 3小时步长精细化参数矩阵 (Meteoblue Table Style) -->
+        <section class="card glass-card hourly-forecast-section">
+            <div class="card-header-clean flex-header">
+                <div class="title-wrap">
+                    <h2 id="hourly-title-text">逐日逐时精细预报 (3小时步长)</h2>
+                    <span class="card-desc">Detailed Parameters Grid</span>
+                </div>
+                <!-- 3h / 1h 切换开关 -->
+                <div class="toggle-container">
+                    <span class="toggle-label active">3h</span>
+                    <label class="switch">
+                        <input type="checkbox" id="time-step-toggle" disabled>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label disabled">1h</span>
+                </div>
+            </div>
+
+            <!-- 参数矩阵表格 -->
+            <div class="hourly-table-outer">
+                <div class="hourly-table-wrapper">
+                    <table class="hourly-table" id="hourly-weather-table">
+                        <thead>
+                            <tr id="row-hours">
+                                <th class="sticky-col label-col">时间 (Hour)</th>
+                                <!-- 动态插入时间 -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="row-weather-icons">
+                                <td class="sticky-col label-col">天气状况</td>
+                                <!-- 动态插入天气图标 -->
+                            </tr>
+                            <tr id="row-temperature-curve-container">
+                                <td class="sticky-col label-col temp-curve-label">
+                                    <div class="curve-legend-item"><span class="legend-line actual"></span>实际温度</div>
+                                    <div class="curve-legend-item"><span class="legend-line apparent"></span>体感温度</div>
+                                </td>
+                                <!-- 水平跨列的 SVG 画布容器，将在 app.js 里动态设置 colspan 并绘制曲线 -->
+                                <td id="temp-curve-td" class="curve-td">
+                                    <div class="curve-svg-wrapper">
+                                        <svg id="temp-curve-svg"></svg>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="row-aqi">
+                                <td class="sticky-col label-col"><i data-lucide="wind" class="col-icon"></i> 空气质量 (AQI)</td>
+                                <!-- 动态插入 AQI -->
+                            </tr>
+                            <tr id="row-uv">
+                                <td class="sticky-col label-col"><i data-lucide="sun-dim" class="col-icon"></i> 紫外线指数 (UV)</td>
+                                <!-- 动态插入 紫外线 -->
+                            </tr>
+                            <tr id="row-wind-direction">
+                                <td class="sticky-col label-col"><i data-lucide="compass" class="col-icon"></i> 风向标</td>
+                                <!-- 风向箭头 -->
+                            </tr>
+                            <tr id="row-wind-speed">
+                                <td class="sticky-col label-col"><i data-lucide="wind" class="col-icon"></i> 风速/阵风 (m/s)</td>
+                                <!-- 风速范围 -->
+                            </tr>
+                            <tr id="row-convective">
+                                <td class="sticky-col label-col"><i data-lucide="shield-alert" class="col-icon"></i> 对流天气风险</td>
+                                <!-- 对流风险 -->
+                            </tr>
+                            <tr id="row-precipitation">
+                                <td class="sticky-col label-col"><i data-lucide="droplet" class="col-icon"></i> 降水量 (mm)</td>
+                                <!-- 降雨高度 -->
+                            </tr>
+                            <tr id="row-precipitation-probability">
+                                <td class="sticky-col label-col"><i data-lucide="percent" class="col-icon"></i> 降水概率</td>
+                                <!-- 降雨概率 -->
+                            </tr>
+                            <tr id="row-precipitation-bars">
+                                <td class="sticky-col label-col">逐时降水量柱</td>
+                                <!-- 微型高度柱 -->
+                            </tr>
+                            <tr id="row-soil">
+                                <td class="sticky-col label-col"><i data-lucide="sprout" class="col-icon"></i> 土壤温湿度</td>
+                                <!-- 土壤 -->
+                            </tr>
+                            <tr id="row-visibility">
+                                <td class="sticky-col label-col"><i data-lucide="eye" class="col-icon"></i> 能见度 (km)</td>
+                                <!-- 能见度 -->
+                            </tr>
+                            <tr id="row-predictability">
+                                <td class="sticky-col label-col"><i data-lucide="target" class="col-icon"></i> 可信度指标</td>
+                                <!-- 靶心置信度 -->
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7日预报趋势图 (Meteoblue 连续纵向列布局) -->
+        <section class="card glass-card daily-forecast-section">
+            <div class="card-header-clean">
+                <h2>7 日趋势预报 (7-Day Forecast Grid)</h2>
+                <div class="header-actions">
+                    <span class="predictability-info"><i data-lucide="target"></i> 可信度校验</span>
+                </div>
+            </div>
+            
+            <div class="daily-column-container" id="daily-columns-wrapper">
+                <!-- 每日天气列将通过 app.js 动态渲染 -->
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <span>正在加载 7 日物理气象趋势...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 页脚 -->
+        <footer class="main-footer">
+            <p>© 2026 诸暨市融合气象系统 - 依据 Meteoblue UI 规范重新设计与重构</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

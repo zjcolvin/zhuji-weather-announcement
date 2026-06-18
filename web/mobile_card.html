@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诸暨天气预报 | 手机卡片</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-glass: rgba(10, 15, 30, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --mb-light-blue: #38bdf8;
+            --accent-green: #00f5a0;
+            --font-number: 'Outfit', sans-serif;
+            --font-main: 'Inter', 'Microsoft YaHei', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: #030712;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        /* 手机卡片主容器 */
+        #mobile-weather-card {
+            width: 410px;
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 头部样式 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-pb: 12px;
+            padding-bottom: 12px;
+        }
+
+        .header-left h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+
+        .header-left .sub {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .header-right .location {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--mb-light-blue);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: flex-end;
+        }
+
+        .header-right .update-time {
+            font-size: 0.62rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* 核心天气快报 */
+        .current-weather-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 14px 18px;
+        }
+
+        .current-temp-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .current-temp {
+            font-family: var(--font-number);
+            font-size: 2.6rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+        }
+
+        .current-feels {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .current-feels span {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .current-icon-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .current-icon {
+            width: 54px;
+            height: 54px;
+        }
+
+        .current-cond-text {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* 生活指标四宫格 */
+        .lifestyle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .grid-item {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid-item i {
+            width: 18px;
+            height: 18px;
+            opacity: 0.8;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        .item-val {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* 颜色标签分类 */
+        .color-green { color: var(--accent-green); }
+        .color-blue { color: var(--mb-light-blue); }
+        .color-orange { color: #f97316; }
+        .color-red { color: #ff3366; }
+
+        /* 逐时曲线容器 */
+        .hourly-curve-section {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .section-title i {
+            width: 12px;
+            height: 12px;
+        }
+
+        .hourly-timeline-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+            margin-top: 4px;
+        }
+
+        .time-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 42px;
+        }
+
+        .time-label {
+            font-size: 0.62rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .time-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .time-pop {
+            font-family: var(--font-number);
+            font-size: 0.58rem;
+            color: var(--mb-light-blue);
+            font-weight: 700;
+        }
+
+        .curve-canvas-wrap {
+            width: 100%;
+            height: 70px;
+            position: relative;
+            margin: 6px 0;
+        }
+
+        #mobile-temp-svg {
+            width: 100%;
+            height: 70px;
+            display: block;
+            overflow: visible;
+        }
+
+        /* 7日趋势纵向列表 */
+        .daily-list-section {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .daily-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .daily-row:last-child {
+            border-bottom: none;
+        }
+
+        .daily-row-day {
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: 85px;
+        }
+
+        .daily-row-icon-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 60px;
+        }
+
+        .daily-row-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        .daily-row-precip {
+            font-family: var(--font-number);
+            font-size: 0.62rem;
+            color: var(--mb-light-blue);
+            font-weight: 600;
+        }
+
+        .daily-row-indices {
+            display: flex;
+            gap: 8px;
+            width: 90px;
+            font-size: 0.62rem;
+            color: var(--text-secondary);
+        }
+
+        .daily-row-index-item {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .daily-row-temp {
+            font-family: var(--font-number);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-align: right;
+            width: 90px;
+        }
+
+        .daily-row-temp .max {
+            color: #fff;
+            margin-right: 6px;
+        }
+
+        .daily-row-temp .min {
+            color: var(--text-secondary);
+        }
+
+        /* 页脚版权 */
+        .card-footer {
+            text-align: center;
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 10px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 卡片主DOM，Playwright 会截取该元素 -->
+    <div id="mobile-weather-card">
+        <!-- 头部 -->
+        <div class="card-header">
+            <div class="header-left">
+                <h1>诸暨气象多源融合看板</h1>
+                <div class="sub">Zhuji Weather Fusion Widget</div>
+            </div>
+            <div class="header-right">
+                <div class="location"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> 中国诸暨</div>
+                <div class="update-time" id="update-time-lbl">06-14 07:30 更新</div>
+            </div>
+        </div>
+
+        <!-- 核心天气气温 -->
+        <div class="current-weather-banner">
+            <div class="current-temp-block">
+                <span class="current-temp" id="curr-temp-val">24°C</span>
+                <span class="current-feels">体感温度 <span id="curr-felt-val">27°C</span></span>
+            </div>
+            <div class="current-icon-block">
+                <img src="" id="curr-weather-img" class="current-icon" alt="weather icon">
+                <span class="current-cond-text" id="curr-cond-txt">多云</span>
+            </div>
+        </div>
+
+        <!-- 四宫格物理与生活指数 -->
+        <div class="lifestyle-grid">
+            <div class="grid-item">
+                <i data-lucide="shirt" class="color-green" id="idx-laundry-ico"></i>
+                <div class="item-info">
+                    <span class="item-label">晾晒防霉</span>
+                    <span class="item-val" id="idx-laundry-lbl">极速晾晒</span>
+                </div>
+            </div>
+            <div class="grid-item">
+                <i data-lucide="wind" class="color-blue" id="idx-aqi-ico"></i>
+                <div class="item-info">
+                    <span class="item-label">空气质量</span>
+                    <span class="item-val" id="idx-aqi-lbl">34 优</span>
+                </div>
+            </div>
+            <div class="grid-item">
+                <i data-lucide="shield-alert" class="color-green" id="idx-cape-ico"></i>
+                <div class="item-info">
+                    <span class="item-label">对流预警</span>
+                    <span class="item-val id="idx-cape-lbl" id="idx-cape-lbl">无风险</span>
+                </div>
+            </div>
+            <div class="grid-item">
+                <i data-lucide="sun-dim" class="color-orange" id="idx-uv-ico"></i>
+                <div class="item-info">
+                    <span class="item-label">户外紫外线</span>
+                    <span class="item-val" id="idx-uv-lbl">中等 (4)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 逐时曲线预警 -->
+        <div class="hourly-curve-section">
+            <div class="section-title">
+                <i data-lucide="clock"></i> 8小时精细化预报
+            </div>
+            
+            <!-- 时间与降水图标行 -->
+            <div class="hourly-timeline-container" id="hourly-timeline">
+                <!-- 动态生成 8 个节点 -->
+            </div>
+
+            <!-- SVG 贝塞尔温度波浪曲线 -->
+            <div class="curve-canvas-wrap">
+                <svg id="mobile-temp-svg"></svg>
+            </div>
+        </div>
+
+        <!-- 7日趋势简版 -->
+        <div class="daily-list-section">
+            <div class="section-title">
+                <i data-lucide="calendar"></i> 7日趋势简报
+            </div>
+            <div id="daily-list-wrapper">
+                <!-- 动态生成 7行 -->
+            </div>
+        </div>
+
+        <!-- 卡片底部 -->
+        <div class="card-footer">
+            Meteoblue + ECMWF + GribStream 物理算法融合
+        </div>
+    </div>
+
+    <!-- 前端脚本：异步拉取接口渲染卡片 -->
+    <script>
+        const ICON_MAP = {
+            "sunny": "clear-day.svg",
+            "sunny-night": "clear-night.svg",
+            "cloudy": "partly-cloudy-day.svg",
+            "cloudy-night": "partly-cloudy-night.svg",
+            "overcast": "overcast.svg",
+            "light-rain": "rain.svg",
+            "heavy-rain": "extreme-day-rain.svg",
+            "heavy-rain-night": "extreme-night-rain.svg",
+            "thunderstorm": "thunderstorms-day-rain.svg",
+            "thunderstorm-night": "thunderstorms-night-rain.svg"
+        };
+
+        const LAUNDRY_COLORS = {
+            1: "color-green",
+            2: "color-blue",
+            3: "color-orange",
+            4: "color-red"
+        };
+
+        const COND_MAP = {
+            "sunny": "晴",
+            "sunny-night": "晴朗(夜)",
+            "cloudy": "多云",
+            "cloudy-night": "多云",
+            "overcast": "阴",
+            "light-rain": "小雨",
+            "heavy-rain": "大雨",
+            "heavy-rain-night": "大雨",
+            "thunderstorm": "雷阵雨",
+            "thunderstorm-night": "雷阵雨"
+        };
+
+        async function loadMobileCard() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isTomorrow = urlParams.get('day') === 'tomorrow';
+
+                const [hourlyRes, dailyRes] = await Promise.all([
+                    fetch("/api/forecast/hourly").then(r => r.json()),
+                    fetch("/api/forecast/daily").then(r => r.json())
+                ]);
+
+                // 1. 设置更新时间
+                const now = new Date();
+                document.getElementById("update-time-lbl").innerText = 
+                    `${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} 更新`;
+
+                // 2. 设置当前气温看板与标题
+                const targetDaily = isTomorrow ? dailyRes[1] : dailyRes[0];
+                const targetHourlyForBanner = isTomorrow 
+                    ? (hourlyRes.find(hour => hour.time_local.startsWith("明日 ")) || hourlyRes[0])
+                    : hourlyRes[0];
+
+                if (isTomorrow) {
+                    document.querySelector(".header-left h1").innerText = "诸暨市明日精细天气预报";
+                } else {
+                    document.querySelector(".header-left h1").innerText = "诸暨气象多源融合看板";
+                }
+
+                if (targetHourlyForBanner) {
+                    if (isTomorrow && targetDaily) {
+                        document.getElementById("curr-temp-val").innerText = `${targetDaily.temperature_min} ~ ${targetDaily.temperature_max}°C`;
+                        document.getElementById("curr-felt-val").innerText = `${targetDaily.temperature_max}°C`;
+                        document.querySelector(".current-feels").innerHTML = `体感预警 <span>${targetDaily.heat_alert}</span>`;
+                        document.getElementById("curr-cond-txt").innerText = COND_MAP[targetDaily.icon] || "多云";
+                        const imgName = ICON_MAP[targetDaily.icon] || "cloudy.svg";
+                        document.getElementById("curr-weather-img").src = `https://cdn.jsdelivr.net/npm/@meteocons/svg@latest/fill/${imgName}`;
+                    } else {
+                        document.getElementById("curr-temp-val").innerText = `${targetHourlyForBanner.temperature}°C`;
+                        document.getElementById("curr-felt-val").innerText = `${targetHourlyForBanner.apparent_temperature}°C`;
+                        document.querySelector(".current-feels").innerHTML = `体感温度 <span id="curr-felt-val">${targetHourlyForBanner.apparent_temperature}°C</span>`;
+                        document.getElementById("curr-cond-txt").innerText = targetHourlyForBanner.condition;
+                        const imgName = ICON_MAP[targetHourlyForBanner.icon] || "cloudy.svg";
+                        document.getElementById("curr-weather-img").src = `https://cdn.jsdelivr.net/npm/@meteocons/svg@latest/fill/${imgName}`;
+                    }
+                    
+                    // 设置四宫格实时指标
+                    // AQI
+                    const aqiVal = isTomorrow && targetDaily ? targetDaily.aqi_mean : targetHourlyForBanner.aqi;
+                    let aqiLevel = "优";
+                    let aqiColor = "color-green";
+                    if (aqiVal > 150) { aqiLevel = "重度"; aqiColor = "color-red"; }
+                    else if (aqiVal > 100) { aqiLevel = "轻度"; aqiColor = "color-orange"; }
+                    else if (aqiVal > 50) { aqiLevel = "良"; aqiColor = "color-blue"; }
+                    
+                    document.getElementById("idx-aqi-lbl").innerText = `${aqiVal} ${aqiLevel}`;
+                    document.getElementById("idx-aqi-ico").className = aqiColor;
+
+                    // 对流 CAPE
+                    let maxCapeLevel = targetHourlyForBanner.cape_level;
+                    let maxCapeRisk = targetHourlyForBanner.cape_risk;
+                    if (isTomorrow) {
+                        const tomorrowHours = hourlyRes.filter(hour => hour.time_local.startsWith("明日 "));
+                        if (tomorrowHours.length > 0) {
+                            const maxHour = tomorrowHours.reduce((prev, current) => (prev.cape_level > current.cape_level) ? prev : current);
+                            maxCapeLevel = maxHour.cape_level;
+                            maxCapeRisk = maxHour.cape_risk;
+                        }
+                    }
+                    let capeColor = "color-green";
+                    if (maxCapeLevel === 3) capeColor = "color-orange";
+                    if (maxCapeLevel === 4) capeColor = "color-red";
+                    document.getElementById("idx-cape-lbl").innerText = maxCapeRisk;
+                    document.getElementById("idx-cape-ico").className = capeColor;
+
+                    // UV Index
+                    const uvVal = isTomorrow && targetDaily ? targetDaily.uv_max : targetHourlyForBanner.uvindex;
+                    let uvText = "低";
+                    let uvColor = "color-green";
+                    if (uvVal >= 8) { uvText = "极高"; uvColor = "color-red"; }
+                    else if (uvVal >= 5) { uvText = "高"; uvColor = "color-orange"; }
+                    else if (uvVal >= 3) { uvText = "中等"; uvColor = "color-blue"; }
+                    
+                    document.getElementById("idx-uv-lbl").innerText = `${uvVal} ${uvText}`;
+                    document.getElementById("idx-uv-ico").className = uvColor;
+                }
+
+                // 3. 设置生活晾晒指标
+                if (targetDaily) {
+                    const cleanLaundryName = targetDaily.laundry_index.split(' ')[0];
+                    document.getElementById("idx-laundry-lbl").innerText = cleanLaundryName;
+                    document.getElementById("idx-laundry-ico").className = LAUNDRY_COLORS[targetDaily.laundry_level] || "color-green";
+                }
+
+                // 4. 渲染 逐时 timeline 节点与 SVG 温度波浪线
+                const hourly8 = isTomorrow 
+                    ? hourlyRes.filter(hour => hour.time_local.startsWith("明日 ")).slice(0, 8)
+                    : hourlyRes.slice(0, 8);
+
+                const hourlyTitle = document.querySelector(".hourly-curve-section .section-title");
+                if (hourlyTitle) {
+                    hourlyTitle.innerHTML = isTomorrow 
+                        ? `<i data-lucide="clock"></i> 明日精细化预报` 
+                        : `<i data-lucide="clock"></i> 8小时精细化预报`;
+                }
+
+                const timelineContainer = document.getElementById("hourly-timeline");
+                timelineContainer.innerHTML = "";
+
+                hourly8.forEach(hour => {
+                    const node = document.createElement("div");
+                    node.className = "time-node";
+                    
+                    const iconFile = ICON_MAP[hour.icon] || "cloudy.svg";
+                    const isRainy = hour.precipitation_probability > 0;
+                    const popLabel = isRainy ? `${hour.precipitation_probability}%` : "";
+                    
+                    // Display hour time cleanest way
+                    let displayTime = hour.time_local;
+                    if (displayTime.startsWith("明日 ")) {
+                        displayTime = displayTime.replace("明日 ", "");
+                    }
+                    
+                    node.innerHTML = `
+                        <span class="time-label">${displayTime}</span>
+                        <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg@latest/fill/${iconFile}" class="time-icon" alt="icon">
+                        <span class="time-pop">${popLabel}</span>
+                    `;
+                    timelineContainer.appendChild(node);
+                });
+
+                drawMobileCurve(hourly8);
+
+                // 5. 7 日趋势行列表
+                const dailyWrapper = document.getElementById("daily-list-wrapper");
+                dailyWrapper.innerHTML = "";
+
+                dailyRes.forEach(day => {
+                    const row = document.createElement("div");
+                    row.className = "daily-row";
+                    
+                    const rowIconFile = ICON_MAP[day.icon] || "cloudy.svg";
+                    const rainText = day.precipitation_text !== "-" ? day.precipitation_text : "";
+                    
+                    row.innerHTML = `
+                        <span class="daily-row-day">${day.day_name}</span>
+                        <div class="daily-row-icon-wrap">
+                            <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg@latest/fill/${rowIconFile}" class="daily-row-icon" alt="icon">
+                            <span class="daily-row-precip">${rainText}</span>
+                        </div>
+                        <div class="daily-row-indices">
+                            <span class="daily-row-index-item" title="AQI"><i data-lucide="wind" style="width:10px;height:10px;color:#10b981;"></i>${day.aqi_mean}</span>
+                            <span class="daily-row-index-item" title="土壤湿度"><i data-lucide="sprout" style="width:10px;height:10px;color:#34d399;"></i>${day.soil_moisture_mean}%</span>
+                        </div>
+                        <span class="daily-row-temp">
+                            <span class="max">${day.temperature_max}°</span>
+                            <span class="min">${day.temperature_min}°</span>
+                        </span>
+                    `;
+                    dailyWrapper.appendChild(row);
+                });
+
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+
+            } catch (err) {
+                console.error("加载移动端卡片数据异常:", err);
+            }
+        }
+
+        // 绘制移动端 SVG 曲线
+        function drawMobileCurve(hourlyData) {
+            const svg = document.getElementById("mobile-temp-svg");
+            svg.innerHTML = "";
+
+            const count = hourlyData.length;
+            const containerWidth = 370; // 410px 宽度减去 2*20px padding
+            const colWidth = containerWidth / count;
+            const height = 70;
+            
+            svg.setAttribute("width", containerWidth);
+            svg.setAttribute("height", height);
+            svg.setAttribute("viewBox", `0 0 ${containerWidth} ${height}`);
+
+            const temps = hourlyData.map(h => h.temperature);
+            const apparents = hourlyData.map(h => h.apparent_temperature);
+            const allVal = [...temps, ...apparents];
+            const maxVal = Math.max(...allVal);
+            const minVal = Math.min(...allVal);
+            const range = maxVal - minVal || 1;
+
+            const pointsActual = [];
+            const pointsApparent = [];
+
+            for (let i = 0; i < count; i++) {
+                const x = colWidth * i + colWidth / 2;
+                const yActual = 52 - ((hourlyData[i].temperature - minVal) / range) * 38;
+                pointsActual.push({ x, y: yActual, val: hourlyData[i].temperature });
+
+                const yApparent = 52 - ((hourlyData[i].apparent_temperature - minVal) / range) * 38;
+                pointsApparent.push({ x, y: yApparent, val: hourlyData[i].apparent_temperature });
+            }
+
+            const getBezierPath = (pts) => {
+                if (pts.length === 0) return "";
+                let d = `M ${pts[0].x} ${pts[0].y}`;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[i];
+                    const p1 = pts[i + 1];
+                    const cpX1 = p0.x + 14;
+                    const cpY1 = p0.y;
+                    const cpX2 = p1.x - 14;
+                    const cpY2 = p1.y;
+                    d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y}`;
+                }
+                return d;
+            };
+
+            // 1. 实际温度：渐变阴影填充
+            if (pointsActual.length > 0) {
+                const pathD = getBezierPath(pointsActual);
+                const fillD = `${pathD} L ${pointsActual[pointsActual.length - 1].x} ${height} L ${pointsActual[0].x} ${height} Z`;
+                
+                let defs = svg.querySelector("defs");
+                if (!defs) {
+                    defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+                    defs.innerHTML = `
+                        <linearGradient id="mob-curve-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--mb-light-blue)" stop-opacity="0.25"/>
+                            <stop offset="100%" stop-color="var(--mb-light-blue)" stop-opacity="0.0"/>
+                        </linearGradient>
+                    `;
+                    svg.appendChild(defs);
+                }
+
+                const fillPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                fillPath.setAttribute("d", fillD);
+                fillPath.setAttribute("fill", "url(#mob-curve-grad)");
+                svg.appendChild(fillPath);
+
+                // 实线
+                const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                linePath.setAttribute("d", pathD);
+                linePath.setAttribute("fill", "none");
+                linePath.setAttribute("stroke", "var(--mb-light-blue)");
+                linePath.setAttribute("stroke-width", "2.5");
+                svg.appendChild(linePath);
+            }
+
+            // 2. 体感温度线 (虚线)
+            if (pointsApparent.length > 0) {
+                const pathD = getBezierPath(pointsApparent);
+                const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                linePath.setAttribute("d", pathD);
+                linePath.setAttribute("fill", "none");
+                linePath.setAttribute("stroke", "var(--accent-green)");
+                linePath.setAttribute("stroke-width", "1.5");
+                linePath.setAttribute("stroke-dasharray", "3,3");
+                svg.appendChild(linePath);
+            }
+
+            // 3. 实际温度：绘制顶点
+            pointsActual.forEach(p => {
+                const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                outerCircle.setAttribute("cx", p.x);
+                outerCircle.setAttribute("cy", p.y);
+                outerCircle.setAttribute("r", "3.5");
+                outerCircle.setAttribute("fill", "#0c0f1c");
+                outerCircle.setAttribute("stroke", "var(--mb-light-blue)");
+                outerCircle.setAttribute("stroke-width", "1.5");
+                svg.appendChild(outerCircle);
+            });
+
+            // 4. 文字标注
+            for (let i = 0; i < count; i++) {
+                const pActual = pointsActual[i];
+                const pApparent = pointsApparent[i];
+
+                let yActualLabel = pActual.y - 8;
+                let yApparentLabel = pApparent.y + 11;
+                
+                if (pActual.val < pApparent.val) {
+                    yActualLabel = pActual.y + 11;
+                    yApparentLabel = pApparent.y - 8;
+                }
+
+                // 实际温度
+                const tActual = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tActual.setAttribute("x", pActual.x);
+                tActual.setAttribute("y", yActualLabel);
+                tActual.setAttribute("text-anchor", "middle");
+                tActual.setAttribute("fill", "var(--text-primary)");
+                tActual.setAttribute("style", "font-family: var(--font-number); font-weight: 700; font-size: 0.68rem; text-shadow: 0 1px 2px rgba(0,0,0,0.85);");
+                tActual.textContent = `${pActual.val}°`;
+                svg.appendChild(tActual);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadMobileCard);
+    </script>
+</body>
+</html>
