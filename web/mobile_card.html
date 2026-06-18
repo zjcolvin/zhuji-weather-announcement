@@ -496,10 +496,21 @@
                     fetch("/api/forecast/daily").then(r => r.json())
                 ]);
 
-                // 1. 设置更新时间
-                const now = new Date();
-                document.getElementById("update-time-lbl").innerText = 
-                    `${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} 更新`;
+                // 1. 设置更新时间 (使用 Asia/Shanghai 时区以适配 GitHub Actions 运行环境)
+                const formatter = new Intl.DateTimeFormat('zh-CN', {
+                    timeZone: 'Asia/Shanghai',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                const parts = formatter.formatToParts(new Date());
+                const month = parts.find(p => p.type === 'month').value;
+                const day = parts.find(p => p.type === 'day').value;
+                const hour = parts.find(p => p.type === 'hour').value;
+                const minute = parts.find(p => p.type === 'minute').value;
+                document.getElementById("update-time-lbl").innerText = `${month}-${day} ${hour}:${minute} 更新`;
 
                 // 2. 设置当前气温看板与标题
                 const targetDaily = isTomorrow ? dailyRes[1] : dailyRes[0];
@@ -780,6 +791,16 @@
                 tActual.setAttribute("style", "font-family: var(--font-number); font-weight: 700; font-size: 0.68rem; text-shadow: 0 1px 2px rgba(0,0,0,0.85);");
                 tActual.textContent = `${pActual.val}°`;
                 svg.appendChild(tActual);
+
+                // 体感温度
+                const tApparent = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tApparent.setAttribute("x", pApparent.x);
+                tApparent.setAttribute("y", yApparentLabel);
+                tApparent.setAttribute("text-anchor", "middle");
+                tApparent.setAttribute("fill", "var(--accent-green)");
+                tApparent.setAttribute("style", "font-family: var(--font-number); font-weight: 500; font-size: 0.58rem; text-shadow: 0 1px 2px rgba(0,0,0,0.85);");
+                tApparent.textContent = `${pApparent.val}°`;
+                svg.appendChild(tApparent);
             }
         }
 
