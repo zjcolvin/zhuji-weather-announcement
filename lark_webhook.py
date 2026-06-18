@@ -131,7 +131,7 @@ def send_to_lark(day="today"):
     # 构建 7 日大盘极简 Markdown 列表
     trend_lines = []
     for d in daily_data[:7]:
-        w = d.get("weekday", "")
+        w = d.get("day_name", "")
         t_n = d.get("temperature_min", "--")
         t_x = d.get("temperature_max", "--")
         p_t = d.get("precipitation_text", "0.0 mm")
