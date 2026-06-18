@@ -9,50 +9,59 @@ from dotenv import load_dotenv
 try:
     from discord_webhook import generate_screenshot
 except ImportError:
-    # 兜底：如果无法导入，定义一个空函数
     def generate_screenshot(day="today"):
         return os.path.exists(f"cache/weather_mobile_{day}.png")
 
 load_dotenv()
 
 LARK_WEBHOOK_URL = os.getenv("LARK_WEBHOOK_URL")
+LARK_APP_ID = os.getenv("LARK_APP_ID")
+LARK_APP_SECRET = os.getenv("LARK_APP_SECRET")
 
-def upload_to_catbox(file_path):
-    # 优先使用 Catbox (相对稳定)
-    print(f"[LARK] 正在上传本地图片 {file_path} 至 Catbox 图床...")
+def upload_image_to_lark_server(file_path):
+    """
+    通过飞书开放平台上传图片获取 image_key (方案 A)
+    需要企业自建应用的 LARK_APP_ID 和 LARK_APP_SECRET
+    """
+    if not LARK_APP_ID or not LARK_APP_SECRET:
+        print("[LARK] 未配置 LARK_APP_ID / LARK_APP_SECRET，跳过飞书图片上传")
+        return None
+        
+    print("[LARK] 检测到自建应用凭证，正在通过飞书官方 API 获取凭证并上传图片...")
     try:
-        url = "https://catbox.moe/user/api.php"
-        data = {"reqtype": "fileupload"}
-        with open(file_path, "rb") as f:
-            files = {"fileToUpload": f}
-            r = requests.post(url, data=data, files=files, timeout=15)
-        if r.status_code == 200 and r.text.strip().startswith("http"):
-            file_url = r.text.strip()
-            print(f"[LARK] Catbox 上传成功: {file_url}")
-            return file_url
-    except Exception as e:
-        print(f"[LARK WARNING] Catbox 上传失败或超时: {e}")
-
-    # 备用使用 Litterbox (临时图床，24小时自动清理)
-    print(f"[LARK] 正在尝试备用图床 Litterbox (24小时过期)...")
-    try:
-        url = "https://litterbox.catbox.moe/resources/internals/api.php"
-        data = {
-            "reqtype": "fileupload",
-            "time": "24h"
+        # 1. 获取 tenant_access_token
+        token_url = "https://open.larksuite.com/open-apis/auth/v3/tenant_access_token/internal"
+        r = requests.post(token_url, json={
+            "app_id": LARK_APP_ID,
+            "app_secret": LARK_APP_SECRET
+        }, timeout=10)
+        token_res = r.json()
+        if token_res.get("code") != 0:
+            print(f"[LARK ERROR] 获取 tenant_access_token 失败: {token_res.get('msg')}")
+            return None
+        token = token_res.get("tenant_access_token")
+        
+        # 2. 上传图片文件到飞书
+        upload_url = "https://open.larksuite.com/open-apis/im/v1/images"
+        headers = {
+            "Authorization": f"Bearer {token}"
         }
         with open(file_path, "rb") as f:
-            files = {"fileToUpload": f}
-            r = requests.post(url, data=data, files=files, timeout=15)
-        if r.status_code == 200 and r.text.strip().startswith("http"):
-            file_url = r.text.strip()
-            print(f"[LARK] Litterbox 备用图床上传成功: {file_url}")
-            return file_url
-        else:
-            print(f"[LARK ERROR] Litterbox 上传失败，HTTP 状态码: {r.status_code}")
+            files = {
+                "image_type": (None, "message"),
+                "image": f
+            }
+            r = requests.post(upload_url, headers=headers, files=files, timeout=20)
+        upload_res = r.json()
+        if upload_res.get("code") != 0:
+            print(f"[LARK ERROR] 飞书服务器图片上传失败: {upload_res.get('msg')}")
             return None
+            
+        image_key = upload_res.get("data", {}).get("image_key")
+        print(f"[LARK] 飞书官方图床上传成功，获得 image_key: {image_key}")
+        return image_key
     except Exception as e:
-        print(f"[LARK ERROR] Litterbox 上传发生异常: {e}")
+        print(f"[LARK ERROR] 飞书官方图片上传发生异常: {e}")
         return None
 
 def send_to_lark(day="today"):
@@ -70,10 +79,10 @@ def send_to_lark(day="today"):
     # 1. 生成截图
     has_image = generate_screenshot(day)
     
-    # 2. 上传到临时图床以获取公网 URL (飞书消息卡片 markdown 引入外部图片要求公网链接)
-    image_url = None
+    # 2. 如果配置了自建应用，则尝试上传获取 image_key (方案 A)
+    image_key = None
     if has_image and os.path.exists(screenshot_path):
-        image_url = upload_to_catbox(screenshot_path)
+        image_key = upload_image_to_lark_server(screenshot_path)
     
     # 3. 从本地接口读取当前数据用于消息拼装
     try:
@@ -82,7 +91,7 @@ def send_to_lark(day="today"):
         r_hourly = requests.get("http://127.0.0.1:8000/api/forecast/hourly", timeout=5)
         hourly_data = r_hourly.json()
     except Exception as e:
-        print(f"[LARK] 读取本地接口失败，使用空/缺省数据: {e}")
+        print(f"[LARK] 读取本地接口失败，使用兜底模拟数据: {e}")
         daily_data = []
         hourly_data = []
 
@@ -114,11 +123,10 @@ def send_to_lark(day="today"):
     header_template = "blue"
     condition_lower = curr.get("condition", "").lower()
     
-    # 如果有雨/强对流或者禁止晾晒，采用警告色
     if "雨" in condition_lower or "雷" in condition_lower:
         header_template = "orange"
     if "禁止" in laundry_idx:
-        header_template = "carmine" # 胭脂红，表现警示或雨天
+        header_template = "carmine" # 胭脂红，表现警示
 
     # 构建 7 日大盘极简 Markdown 列表
     trend_lines = []
@@ -140,98 +148,90 @@ def send_to_lark(day="today"):
     # 实时温度小结
     if is_tomorrow:
         card_elements.append({
-            "tag": "div",
-            "text": {
-                "tag": "lark_md",
-                "content": f"**预报天数**: <font color='green'>**明日 (24小时精细预报)**</font> | **气象状况**: 明日多源物理模型融合已更新"
-            }
+            "tag": "markdown",
+            "content": f"**预报天数**: <font color=\"green\">**明日 (24小时精细预报)**</font> | **气象状况**: 明日多源物理模型融合已更新"
         })
     else:
         card_elements.append({
-            "tag": "div",
-            "text": {
-                "tag": "lark_md",
-                "content": f"**实时温度**: <font color='green'>**{curr.get('temperature', '--')}°C**</font> (体感 **{curr.get('apparent_temperature', '--')}°C**) | **当前天气**: `{curr.get('condition', '--')}`"
-            }
+            "tag": "markdown",
+            "content": f"**实时温度**: <font color=\"green\">**{curr.get('temperature', '--')}°C**</font> (体感 **{curr.get('apparent_temperature', '--')}°C**) | **当前天气**: `{curr.get('condition', '--')}`"
         })
         
     card_elements.append({"tag": "hr"})
     
-    # 四宫格核心指标 Grid Fields
+    # 飞书标准的双栏分栏布局 (column_set) 代替 v1 fields，适配 schema 2.0
     card_elements.append({
-        "tag": "div",
-        "fields": [
+        "tag": "column_set",
+        "horizontal_spacing": "medium",
+        "columns": [
             {
-                "is_short": True,
-                "text": {
-                    "tag": "lark_md",
-                    "content": f"🌡️ **气温区间**\n`{temp_min}°C` ~ `{temp_max}°C`"
-                }
+                "tag": "column",
+                "width": "weighted",
+                "weight": 1,
+                "elements": [
+                    {
+                        "tag": "markdown",
+                        "content": f"🌡️ **气温区间**\n`{temp_min}°C` ~ `{temp_max}°C`"
+                    },
+                    {
+                        "tag": "markdown",
+                        "content": f"🌪️ **风速与对流**\n风力 `{wind_speed}`\n对流 **{cape_risk}**"
+                    }
+                ]
             },
             {
-                "is_short": True,
-                "text": {
-                    "tag": "lark_md",
-                    "content": f"🧺 **防霉晒衣**\n**{laundry_idx}**"
-                }
-            },
-            {
-                "is_short": True,
-                "text": {
-                    "tag": "lark_md",
-                    "content": f"🌪️ **风速与对流**\n风力 `{wind_speed}` | 对流 **{cape_risk}**"
-                }
-            },
-            {
-                "is_short": True,
-                "text": {
-                    "tag": "lark_md",
-                    "content": f"😷 **健康与环境**\nAQI `{aqi_mean}` | 紫外线最高 `UV {uv_max}`"
-                }
+                "tag": "column",
+                "width": "weighted",
+                "weight": 1,
+                "elements": [
+                    {
+                        "tag": "markdown",
+                        "content": f"🧺 **防霉晒衣**\n**{laundry_idx}**"
+                    },
+                    {
+                        "tag": "markdown",
+                        "content": f"😷 **健康与环境**\nAQI `{aqi_mean}`\n紫外线最高 `UV {uv_max}`"
+                    }
+                ]
             }
         ]
     })
     
     card_elements.append({"tag": "hr"})
     
-    # 嵌入截图趋势图
-    if image_url:
+    # 如果通过自建应用成功生成了 image_key，则渲染原生的 img 组件 (方案 A)
+    # 如果没有自建应用 (方案 B)，则不渲染任何图片组件，避免加载失效
+    if image_key:
         card_elements.append({
-            "tag": "div",
-            "text": {
-                "tag": "lark_md",
-                "content": f"📊 **气温与降水曲线趋势图 (手机卡片)**:\n![天气趋势]({image_url})"
+            "tag": "img",
+            "img_key": image_key,
+            "alt": {
+                "tag": "plain_text",
+                "content": "气温与降水曲线趋势图"
             }
         })
         card_elements.append({"tag": "hr"})
     else:
-        print("[LARK WARNING] 缺少公网图片 URL，卡片将不显示截图组件")
+        print("[LARK] 未获得有效的 image_key，卡片将使用极简模式渲染 (无趋势图片)")
         
     # 7 日天气简报
     card_elements.append({
-        "tag": "div",
-        "text": {
-            "tag": "lark_md",
-            "content": f"📈 **7日天气变化趋势大盘**\n{trend_text}"
-        }
+        "tag": "markdown",
+        "content": f"📈 **7日天气变化趋势大盘**\n{trend_text}"
     })
     
     card_elements.append({"tag": "hr"})
     
-    # 脚注与时间戳
+    # 脚注与时间戳 (在 schema 2.0 中使用普通的 markdown 组件设置灰色文本代替 note)
     card_elements.append({
-        "tag": "note",
-        "elements": [
-            {
-                "tag": "plain_text",
-                "content": f"数据源: Meteoblue (mLM/MOS) + ECMWF + GribStream GFS | 更新时间: {time_str}"
-            }
-        ]
+        "tag": "markdown",
+        "content": f"<font color=\"grey\">数据源: Meteoblue (mLM/MOS) + ECMWF + GribStream GFS | 更新时间: {time_str}</font>"
     })
 
     payload = {
         "msg_type": "interactive",
         "card": {
+            "schema": "2.0",
             "config": {
                 "wide_screen_mode": True,
                 "enable_forward": True
@@ -243,14 +243,16 @@ def send_to_lark(day="today"):
                 },
                 "template": header_template
             },
-            "elements": card_elements
+            "body": {
+                "elements": card_elements
+            }
         }
     }
 
     # 6. 发送 POST 请求到 Webhook 地址
-    print(f"[LARK] 正在发送 Webhook 消息至飞书/Lark (天数: {day})...")
+    print(f"[LARK] 正在向飞书/Lark群推送 Card 2.0 消息 (天数: {day})...")
     try:
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json; charset=utf-8"}
         r = requests.post(LARK_WEBHOOK_URL, headers=headers, data=json.dumps(payload), timeout=25)
         print(f"[LARK] Webhook 返回状态码: {r.status_code}")
         print(f"[LARK] 响应数据: {r.text}")
