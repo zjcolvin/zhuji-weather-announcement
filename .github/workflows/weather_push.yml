@@ -62,11 +62,11 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "day=${{ github.event.inputs.day }}" >> $GITHUB_OUTPUT
           else
-            # 获取当前 UTC 小时
-            HOUR=$(date -u +%H)
-            echo "UTC Hour: $HOUR"
-            # 14 点 UTC 对应北京时间 22 点，推送明天预报
-            if [ "$HOUR" = "14" ]; then
+            # 获取北京时间 (UTC+8) 小时，以确保在 Action 偶尔排队延迟时依然能准确判定
+            HOUR_BJ=$(TZ=Asia/Shanghai date +%H)
+            echo "Beijing Hour: $HOUR_BJ"
+            # 北京时间 21点至 23点 之间触发的均视为晚上 22 点推送，发送明天预报
+            if [ "$HOUR_BJ" -ge 21 ] && [ "$HOUR_BJ" -le 23 ]; then
               echo "day=tomorrow" >> $GITHUB_OUTPUT
             else
               echo "day=today" >> $GITHUB_OUTPUT
