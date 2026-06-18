@@ -624,14 +624,12 @@ def run_scheduler():
             # 1. 06:00 推送 (仅在 06:00 到 12:00 之间生效)
             if t_06 <= now < t_12 and last_sent.get("06:00") != current_date:
                 print(f"[SCHEDULER] 触发每天早上 06:00 今天天气推送任务...")
-                discord_webhook.send_to_discord(day="today")
                 lark_webhook.send_to_lark(day="today")
                 last_sent["06:00"] = current_date
                 
             # 2. 12:00 推送 (仅在 12:00 到 22:00 之间生效)
             elif t_12 <= now < t_22 and last_sent.get("12:00") != current_date:
                 print(f"[SCHEDULER] 触发每天中午 12:00 今天天气推送任务...")
-                discord_webhook.send_to_discord(day="today")
                 lark_webhook.send_to_lark(day="today")
                 last_sent["12:00"] = current_date
                 last_sent["06:00"] = current_date # 同步标记，防止回退补发
@@ -639,7 +637,6 @@ def run_scheduler():
             # 3. 22:00 推送 (在 22:00 之后生效)
             elif now >= t_22 and last_sent.get("22:00") != current_date:
                 print(f"[SCHEDULER] 触发每天晚上 22:00 明天精细天气推送任务...")
-                discord_webhook.send_to_discord(day="tomorrow")
                 lark_webhook.send_to_lark(day="tomorrow")
                 last_sent["22:00"] = current_date
                 last_sent["06:00"] = current_date
