@@ -478,6 +478,7 @@ class WeatherFusionEngine:
                 "precipitation_text": precip_text,
                 "sunshine_hours": f"{sun_hours} h",
                 "icon": cond_day["icon"],
+                "condition_text": cond_day["text"],
                 "night_icon": cond_night["icon"],
                 "predictability": pred_dots,
                 "laundry_index": laundry["text"],
