@@ -141,7 +141,8 @@ def send_to_lark(day="today"):
 
     # 5. 组装飞书 v2 版消息卡片 JSON
     title_text = "🔔 诸暨市明日精细天气预报" if is_tomorrow else "🌤️ 诸暨今日多源气象融合预报"
-    time_str = datetime.datetime.now().strftime("%m-%d %H:%M")
+    tz_zhuji = datetime.timezone(datetime.timedelta(hours=8))
+    time_str = datetime.datetime.now(tz_zhuji).strftime("%m-%d %H:%M")
     
     card_elements = []
     

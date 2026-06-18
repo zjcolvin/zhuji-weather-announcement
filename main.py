@@ -419,7 +419,8 @@ class WeatherFusionEngine:
             weekday_idx = dt.weekday()
             base_day_name = day_names[weekday_idx]
             
-            today_date = datetime.date.today()
+            tz_zhuji = datetime.timezone(datetime.timedelta(hours=8))
+            today_date = datetime.datetime.now(tz_zhuji).date()
             tomorrow_date = today_date + datetime.timedelta(days=1)
             
             if dt.date() == today_date:
