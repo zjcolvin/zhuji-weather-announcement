@@ -646,11 +646,12 @@ def run_scheduler():
             print(f"[SCHEDULER ERROR] 定时线程发生异常: {e}")
         time.sleep(30)
 
-@app.on_event("startup")
-def start_scheduler():
-    print("[SCHEDULER] 正在启动后台定时推送线程...")
-    t = threading.Thread(target=run_scheduler, daemon=True)
-    t.start()
+# @app.on_event("startup")
+# def start_scheduler():
+#     # 已根据用户要求禁用本地后台定时线程，仅使用 GitHub Actions 定时运行推送任务，防止重复推送
+#     print("[SCHEDULER] 本地后台定时推送线程已禁用。")
+#     # t = threading.Thread(target=run_scheduler, daemon=True)
+#     # t.start()
 
 engine = WeatherFusionEngine()
 
