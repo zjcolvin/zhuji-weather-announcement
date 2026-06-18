@@ -268,83 +268,107 @@
             overflow: visible;
         }
 
-        /* 7日趋势纵向列表 */
-        .daily-list-section {
+        /* 7日趋势横向曲线版 */
+        .daily-trend-section {
             background: rgba(255, 255, 255, 0.01);
             border: 1px solid rgba(255, 255, 255, 0.04);
             border-radius: 14px;
             padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-        }
-
-        .daily-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 4px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-        }
-
-        .daily-row:last-child {
-            border-bottom: none;
-        }
-
-        .daily-row-day {
-            font-size: 0.75rem;
-            font-weight: 600;
-            width: 85px;
-        }
-
-        .daily-row-icon-wrap {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            width: 60px;
-        }
-
-        .daily-row-icon {
-            width: 22px;
-            height: 22px;
-        }
-
-        .daily-row-precip {
-            font-family: var(--font-number);
-            font-size: 0.62rem;
-            color: var(--mb-light-blue);
-            font-weight: 600;
-        }
-
-        .daily-row-indices {
-            display: flex;
             gap: 8px;
-            width: 90px;
-            font-size: 0.62rem;
+        }
+
+        .daily-trend-card {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .daily-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            justify-items: center;
+            padding: 0 2px;
+        }
+
+        .daily-header-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            text-align: center;
+            gap: 3px;
+        }
+
+        .daily-day-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .daily-date-label {
+            font-size: 0.52rem;
             color: var(--text-secondary);
         }
 
-        .daily-row-index-item {
+        .daily-cond-icon {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+        }
+
+        .daily-cond-text {
+            font-size: 0.58rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .daily-curve-wrap {
+            width: 100%;
+            height: 80px;
+            position: relative;
+            margin: 4px 0;
+        }
+
+        #daily-temp-svg {
+            width: 100%;
+            height: 80px;
+            display: block;
+            overflow: visible;
+        }
+
+        .daily-footer-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            justify-items: center;
+            padding: 0 2px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 6px;
+            margin-top: 2px;
+        }
+
+        .daily-footer-col {
             display: flex;
+            flex-direction: column;
             align-items: center;
+            width: 100%;
+            text-align: center;
             gap: 2px;
         }
 
-        .daily-row-temp {
+        .daily-precip-label {
             font-family: var(--font-number);
-            font-size: 0.72rem;
+            font-size: 0.52rem;
+            color: var(--mb-light-blue);
             font-weight: 600;
-            text-align: right;
-            width: 90px;
+            height: 11px;
         }
 
-        .daily-row-temp .max {
-            color: #fff;
-            margin-right: 6px;
-        }
-
-        .daily-row-temp .min {
+        .daily-aqi-label {
+            font-size: 0.52rem;
             color: var(--text-secondary);
+            font-weight: 500;
         }
 
         /* 页脚版权 */
@@ -435,13 +459,22 @@
             </div>
         </div>
 
-        <!-- 7日趋势简版 -->
-        <div class="daily-list-section">
+        <!-- 7日趋势曲线版 -->
+        <div class="daily-trend-section">
             <div class="section-title">
-                <i data-lucide="calendar"></i> 7日趋势简报
+                <i data-lucide="calendar"></i> 7日天气变化趋势
             </div>
-            <div id="daily-list-wrapper">
-                <!-- 动态生成 7行 -->
+            <div class="daily-trend-card">
+                <!-- 顶部列信息 -->
+                <div class="daily-header-row" id="daily-header-row"></div>
+                
+                <!-- 中间曲线 -->
+                <div class="daily-curve-wrap">
+                    <svg id="daily-temp-svg"></svg>
+                </div>
+                
+                <!-- 底部列信息 -->
+                <div class="daily-footer-row" id="daily-footer-row"></div>
             </div>
         </div>
 
@@ -628,34 +661,48 @@
 
                 drawMobileCurve(hourly8);
 
-                // 5. 7 日趋势行列表
-                const dailyWrapper = document.getElementById("daily-list-wrapper");
-                dailyWrapper.innerHTML = "";
+                // 5. 7 日趋势横向卡片渲染
+                const headerRow = document.getElementById("daily-header-row");
+                const footerRow = document.getElementById("daily-footer-row");
+                headerRow.innerHTML = "";
+                footerRow.innerHTML = "";
 
                 dailyRes.forEach(day => {
-                    const row = document.createElement("div");
-                    row.className = "daily-row";
+                    // 1) 顶部列：天、日期、图标、状况
+                    const headerCol = document.createElement("div");
+                    headerCol.className = "daily-header-col";
                     
                     const rowIconFile = ICON_MAP[day.icon] || "cloudy.svg";
-                    const rainText = day.precipitation_text !== "-" ? day.precipitation_text : "";
                     
-                    row.innerHTML = `
-                        <span class="daily-row-day">${day.day_name}</span>
-                        <div class="daily-row-icon-wrap">
-                            <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg@latest/fill/${rowIconFile}" class="daily-row-icon" alt="icon">
-                            <span class="daily-row-precip">${rainText}</span>
-                        </div>
-                        <div class="daily-row-indices">
-                            <span class="daily-row-index-item" title="AQI"><i data-lucide="wind" style="width:10px;height:10px;color:#10b981;"></i>${day.aqi_mean}</span>
-                            <span class="daily-row-index-item" title="土壤湿度"><i data-lucide="sprout" style="width:10px;height:10px;color:#34d399;"></i>${day.soil_moisture_mean}%</span>
-                        </div>
-                        <span class="daily-row-temp">
-                            <span class="max">${day.temperature_max}°</span>
-                            <span class="min">${day.temperature_min}°</span>
-                        </span>
+                    // 缩短星期显示，比如 "今天 (周四)" -> "今天", "周五" -> "周五"
+                    let displayDay = day.day_name;
+                    if (displayDay.includes(" (")) {
+                        displayDay = displayDay.split(" (")[0];
+                    }
+                    
+                    headerCol.innerHTML = `
+                        <span class="daily-day-label">${displayDay}</span>
+                        <span class="daily-date-label">${day.date}</span>
+                        <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg@latest/fill/${rowIconFile}" class="daily-cond-icon" alt="icon">
+                        <span class="daily-cond-text">${day.condition_text}</span>
                     `;
-                    dailyWrapper.appendChild(row);
+                    headerRow.appendChild(headerCol);
+
+                    // 2) 底部列：降水量、AQI
+                    const footerCol = document.createElement("div");
+                    footerCol.className = "daily-footer-col";
+                    
+                    const rainVal = day.precipitation_text !== "-" ? day.precipitation_text.replace(" mm", "") : "";
+                    const precipText = rainVal ? `${rainVal}m` : "-";
+                    
+                    footerCol.innerHTML = `
+                        <span class="daily-precip-label">${precipText}</span>
+                        <span class="daily-aqi-label">AQI ${day.aqi_mean}</span>
+                    `;
+                    footerRow.appendChild(footerCol);
                 });
+
+                drawDailyCurve(dailyRes);
 
                 if (window.lucide) {
                     window.lucide.createIcons();
@@ -802,6 +849,119 @@
                 tApparent.textContent = `${pApparent.val}°`;
                 svg.appendChild(tApparent);
             }
+        }
+
+        // 绘制 7 日高低温变化曲线
+        function drawDailyCurve(dailyData) {
+            const svg = document.getElementById("daily-temp-svg");
+            svg.innerHTML = "";
+
+            const count = dailyData.length;
+            const containerWidth = 370; // 410px - 40px
+            const colWidth = containerWidth / count;
+            const height = 80;
+
+            svg.setAttribute("width", containerWidth);
+            svg.setAttribute("height", height);
+            svg.setAttribute("viewBox", `0 0 ${containerWidth} ${height}`);
+
+            const maxTemps = dailyData.map(d => d.temperature_max);
+            const minTemps = dailyData.map(d => d.temperature_min);
+            const globalMax = Math.max(...maxTemps);
+            const globalMin = Math.min(...minTemps);
+            const range = globalMax - globalMin || 1;
+
+            const pointsMax = [];
+            const pointsMin = [];
+
+            for (let i = 0; i < count; i++) {
+                const x = colWidth * i + colWidth / 2;
+                // 将高低温区段映射到 Y 轴 [18, 62] px，保证上下各有盈余空间放置标注
+                const yMax = 62 - ((dailyData[i].temperature_max - globalMin) / range) * 44;
+                pointsMax.push({ x, y: yMax, val: dailyData[i].temperature_max });
+
+                const yMin = 62 - ((dailyData[i].temperature_min - globalMin) / range) * 44;
+                pointsMin.push({ x, y: yMin, val: dailyData[i].temperature_min });
+            }
+
+            const getBezierPath = (pts) => {
+                if (pts.length === 0) return "";
+                let d = `M ${pts[0].x} ${pts[0].y}`;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[i];
+                    const p1 = pts[i + 1];
+                    const cpX1 = p0.x + 12;
+                    const cpY1 = p0.y;
+                    const cpX2 = p1.x - 12;
+                    const cpY2 = p1.y;
+                    d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y}`;
+                }
+                return d;
+            };
+
+            // 1. 绘制高温曲线与渐变
+            if (pointsMax.length > 0) {
+                const pathD = getBezierPath(pointsMax);
+                const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                linePath.setAttribute("d", pathD);
+                linePath.setAttribute("fill", "none");
+                linePath.setAttribute("stroke", "#f97316"); // 暖橙色
+                linePath.setAttribute("stroke-width", "2");
+                svg.appendChild(linePath);
+            }
+
+            // 2. 绘制低温曲线
+            if (pointsMin.length > 0) {
+                const pathD = getBezierPath(pointsMin);
+                const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                linePath.setAttribute("d", pathD);
+                linePath.setAttribute("fill", "none");
+                linePath.setAttribute("stroke", "#38bdf8"); // 冰蓝色
+                linePath.setAttribute("stroke-width", "2");
+                svg.appendChild(linePath);
+            }
+
+            // 3. 绘制高温顶点与文字标签
+            pointsMax.forEach(p => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", p.x);
+                circle.setAttribute("cy", p.y);
+                circle.setAttribute("r", "3");
+                circle.setAttribute("fill", "#0c0f1c");
+                circle.setAttribute("stroke", "#f97316");
+                circle.setAttribute("stroke-width", "1.5");
+                svg.appendChild(circle);
+
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", p.x);
+                txt.setAttribute("y", p.y - 7);
+                txt.setAttribute("text-anchor", "middle");
+                txt.setAttribute("fill", "#fff");
+                txt.setAttribute("style", "font-family: var(--font-number); font-weight: 700; font-size: 0.65rem; text-shadow: 0 1px 2px rgba(0,0,0,0.85);");
+                txt.textContent = `${p.val}°`;
+                svg.appendChild(txt);
+            });
+
+            // 4. 绘制低温顶点与文字标签
+            pointsMin.forEach(p => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", p.x);
+                circle.setAttribute("cy", p.y);
+                circle.setAttribute("r", "3");
+                circle.setAttribute("fill", "#0c0f1c");
+                circle.setAttribute("stroke", "#38bdf8");
+                circle.setAttribute("stroke-width", "1.5");
+                svg.appendChild(circle);
+
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", p.x);
+                txt.setAttribute("y", p.y + 11);
+                txt.setAttribute("text-anchor", "middle");
+                txt.setAttribute("fill", "var(--text-secondary)");
+                txt.setAttribute("style", "font-family: var(--font-number); font-weight: 600; font-size: 0.6rem; text-shadow: 0 1px 2px rgba(0,0,0,0.85);");
+                txt.textContent = `${p.val}°`;
+                svg.appendChild(txt);
+            });
         }
 
         document.addEventListener("DOMContentLoaded", loadMobileCard);

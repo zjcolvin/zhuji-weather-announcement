@@ -221,7 +221,7 @@ def send_to_lark(day="today"):
     card_elements.append({"tag": "hr"})
     
     # 如果通过自建应用成功生成了 image_key，则渲染原生的 img 组件 (方案 A)
-    # 如果没有自建应用 (方案 B)，则不渲染任何图片组件，避免加载失效
+    # 如果没有自建应用 (方案 B)，则不渲染任何图片组件，避免加载失效，并追加文字版 7 日大盘作为降级备用
     if image_key:
         card_elements.append({
             "tag": "img",
@@ -233,15 +233,13 @@ def send_to_lark(day="today"):
         })
         card_elements.append({"tag": "hr"})
     else:
-        print("[LARK] 未获得有效的 image_key，卡片将使用极简模式渲染 (无趋势图片)")
-        
-    # 7 日天气简报
-    card_elements.append({
-        "tag": "markdown",
-        "content": f"📈 **7日天气变化趋势大盘**\n{trend_text}"
-    })
-    
-    card_elements.append({"tag": "hr"})
+        print("[LARK] 未获得有效的 image_key，卡片将使用极简模式渲染 (无趋势图片，追加 7 日文字大盘)")
+        # 7 日天气简报 (仅在没有趋势图片时作为文字兜底展示，防止与图片内的数字/图示重复)
+        card_elements.append({
+            "tag": "markdown",
+            "content": f"📈 **7日天气变化趋势大盘**\n{trend_text}"
+        })
+        card_elements.append({"tag": "hr"})
     
     # 脚注与时间戳 (在 schema 2.0 中使用普通的 markdown 组件设置灰色文本代替 note)
     card_elements.append({
