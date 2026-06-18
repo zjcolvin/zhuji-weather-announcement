@@ -64,6 +64,25 @@ def upload_image_to_lark_server(file_path):
         print(f"[LARK ERROR] 飞书官方图片上传发生异常: {e}")
         return None
 
+def map_icon_to_emoji(icon_name):
+    """
+    将天气 icon 字段映射为对应的 Emoji 气象图标，实现精细化渲染
+    """
+    mapping = {
+        "sunny": "☀️",
+        "sunny-night": "🌙",
+        "cloudy": "⛅",
+        "cloudy-night": "⛅",
+        "overcast": "☁️",
+        "light-rain": "🌧️",
+        "thunderstorm": "⛈️",
+        "thunderstorm-night": "⛈️",
+        "heavy-rain": "🌧️",
+        "heavy-rain-night": "🌧️",
+        "fog": "🌫️"
+    }
+    return mapping.get(icon_name, "✨")
+
 def send_to_lark(day="today"):
     # 优先使用环境变量或参数传入的 day
     day = os.getenv("PUSH_DAY", day)
@@ -136,7 +155,8 @@ def send_to_lark(day="today"):
         t_x = d.get("temperature_max", "--")
         p_t = d.get("precipitation_text", "0.0 mm")
         cond_text = d.get("condition_text", "晴")
-        trend_lines.append(f"• **{w}**: `{t_n}°C` ~ `{t_x}°C` | {cond_text} ({p_t})")
+        emoji = map_icon_to_emoji(d.get("icon", ""))
+        trend_lines.append(f"• **{w}**: `{t_n}°C` ~ `{t_x}°C` | {emoji} {cond_text} ({p_t})")
     trend_text = "\n".join(trend_lines)
 
     # 5. 组装飞书 v2 版消息卡片 JSON
@@ -155,7 +175,7 @@ def send_to_lark(day="today"):
     else:
         card_elements.append({
             "tag": "markdown",
-            "content": f"**实时温度**: <font color=\"green\">**{curr.get('temperature', '--')}°C**</font> (体感 **{curr.get('apparent_temperature', '--')}°C**) | **当前天气**: `{curr.get('condition', '--')}`"
+            "content": f"**实时温度**: <font color=\"green\">**{curr.get('temperature', '--')}°C**</font> (体感 **{curr.get('apparent_temperature', '--')}°C**) | **当前天气**: {map_icon_to_emoji(curr.get('icon', ''))} `{curr.get('condition', '--')}`"
         })
         
     card_elements.append({"tag": "hr"})
