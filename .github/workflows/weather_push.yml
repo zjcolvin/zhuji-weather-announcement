@@ -81,6 +81,14 @@ jobs:
         run: |
           python discord_webhook.py ${{ steps.determine_day.outputs.day }}
 
+      - name: Send Weather Forecast to Lark
+        env:
+          LARK_WEBHOOK_URL: ${{ secrets.LARK_WEBHOOK_URL }}
+          METEOBLUE_API_KEY: ${{ secrets.METEOBLUE_API_KEY }}
+          GRIBSTREAM_API_KEY: ${{ secrets.GRIBSTREAM_API_KEY }}
+        run: |
+          python lark_webhook.py ${{ steps.determine_day.outputs.day }}
+
       - name: Upload Weather Card Screenshot
         uses: actions/upload-artifact@v4
         with:

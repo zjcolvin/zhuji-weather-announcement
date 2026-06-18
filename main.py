@@ -592,6 +592,7 @@ class WeatherFusionEngine:
 
 import threading
 import discord_webhook
+import lark_webhook
 
 def run_scheduler():
     # 后台定时扫描线程，每 30 秒运行一次
@@ -622,12 +623,14 @@ def run_scheduler():
             if t_06 <= now < t_12 and last_sent.get("06:00") != current_date:
                 print(f"[SCHEDULER] 触发每天早上 06:00 今天天气推送任务...")
                 discord_webhook.send_to_discord(day="today")
+                lark_webhook.send_to_lark(day="today")
                 last_sent["06:00"] = current_date
                 
             # 2. 12:00 推送 (仅在 12:00 到 22:00 之间生效)
             elif t_12 <= now < t_22 and last_sent.get("12:00") != current_date:
                 print(f"[SCHEDULER] 触发每天中午 12:00 今天天气推送任务...")
                 discord_webhook.send_to_discord(day="today")
+                lark_webhook.send_to_lark(day="today")
                 last_sent["12:00"] = current_date
                 last_sent["06:00"] = current_date # 同步标记，防止回退补发
                 
@@ -635,6 +638,7 @@ def run_scheduler():
             elif now >= t_22 and last_sent.get("22:00") != current_date:
                 print(f"[SCHEDULER] 触发每天晚上 22:00 明天精细天气推送任务...")
                 discord_webhook.send_to_discord(day="tomorrow")
+                lark_webhook.send_to_lark(day="tomorrow")
                 last_sent["22:00"] = current_date
                 last_sent["06:00"] = current_date
                 last_sent["12:00"] = current_date
@@ -665,6 +669,16 @@ def get_daily_forecast():
 def trigger_discord_push(day: str = "today"):
     """手动触发一次 Discord Webhook 推送"""
     success = discord_webhook.send_to_discord(day=day)
+    return {
+        "status": "success" if success else "failed",
+        "day": day,
+        "timestamp": datetime.datetime.now().isoformat()
+    }
+
+@app.get("/api/push-lark")
+def trigger_lark_push(day: str = "today"):
+    """手动触发一次 Lark Webhook 推送"""
+    success = lark_webhook.send_to_lark(day=day)
     return {
         "status": "success" if success else "failed",
         "day": day,
