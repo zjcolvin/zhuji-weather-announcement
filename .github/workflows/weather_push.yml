@@ -80,3 +80,9 @@ jobs:
           GRIBSTREAM_API_KEY: ${{ secrets.GRIBSTREAM_API_KEY }}
         run: |
           python discord_webhook.py ${{ steps.determine_day.outputs.day }}
+
+      - name: Upload Weather Card Screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-card-${{ steps.determine_day.outputs.day }}
+          path: cache/weather_mobile_${{ steps.determine_day.outputs.day }}.png
