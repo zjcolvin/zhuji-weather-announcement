@@ -693,7 +693,7 @@
                     footerCol.className = "daily-footer-col";
                     
                     const rainVal = day.precipitation_text !== "-" ? day.precipitation_text.replace(" mm", "") : "";
-                    const precipText = rainVal ? `${rainVal}m` : "-";
+                    const precipText = rainVal ? `${rainVal}mm` : "-";
                     
                     footerCol.innerHTML = `
                         <span class="daily-precip-label">${precipText}</span>
