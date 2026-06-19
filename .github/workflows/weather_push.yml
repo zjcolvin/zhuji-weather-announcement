@@ -11,11 +11,12 @@ on:
   workflow_dispatch:
     inputs:
       day:
-        description: 'Which day to push'
+        description: 'Which day to push (auto will detect based on current Beijing time)'
         required: true
-        default: 'today'
+        default: 'auto'
         type: choice
         options:
+          - auto
           - today
           - tomorrow
 
@@ -59,10 +60,9 @@ jobs:
       - name: Determine Push Day
         id: determine_day
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "day=${{ github.event.inputs.day }}" >> $GITHUB_OUTPUT
-          else
-            # 获取北京时间 (UTC+8) 小时，以确保在 Action 偶尔排队延迟时依然能准确判定
+          INPUT_DAY="${{ github.event.inputs.day }}"
+          if [ "$INPUT_DAY" = "auto" ] || [ -z "$INPUT_DAY" ]; then
+            # 自动模式或定时触发时，根据北京时间 (UTC+8) 小时判定推送天数
             HOUR_BJ=$(TZ=Asia/Shanghai date +%H)
             echo "Beijing Hour: $HOUR_BJ"
             # 北京时间 21点至 23点 之间触发的均视为晚上 22 点推送，发送明天预报
@@ -71,6 +71,9 @@ jobs:
             else
               echo "day=today" >> $GITHUB_OUTPUT
             fi
+          else
+            # 强制指定的天数 (today / tomorrow)
+            echo "day=$INPUT_DAY" >> $GITHUB_OUTPUT
           fi
 
 
