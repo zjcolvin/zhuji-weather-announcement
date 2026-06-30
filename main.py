@@ -94,13 +94,13 @@ def map_pictocode_to_condition(pictocode: int, is_day: bool) -> dict:
         cond = {"text": "多云", "icon": "cloudy" if is_day else "cloudy-night"}
     elif pictocode in [4, 5]:
         cond = {"text": "阴" if pictocode == 4 else "有雾", "icon": "overcast"}
-    elif pictocode in [6, 7, 10, 11, 12, 14, 16]:
+    elif pictocode in [6, 7, 10, 11, 12, 14, 16, 31, 33]:
         cond = {"text": "小雨", "icon": "light-rain"}
-    elif pictocode in [8, 21, 22, 23]:
+    elif pictocode in [8, 21, 22, 23, 27, 28, 30]:
         cond = {"text": "雷阵雨", "icon": "thunderstorm" if is_day else "thunderstorm-night"}
     elif pictocode in [24, 25]:
         cond = {"text": "大雨", "icon": "heavy-rain" if is_day else "heavy-rain-night"}
-    elif pictocode in [9, 13, 15, 17]:
+    elif pictocode in [9, 13, 15, 17, 26, 29, 32, 34, 35]:
         cond = {"text": "雨夹雪", "icon": "light-rain"}
     return cond
 

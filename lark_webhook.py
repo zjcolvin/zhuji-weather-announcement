@@ -72,7 +72,7 @@ def map_icon_to_emoji(icon_name):
         "sunny": "☀️",
         "sunny-night": "🌙",
         "cloudy": "⛅",
-        "cloudy-night": "⛅",
+        "cloudy-night": "☁️",
         "overcast": "☁️",
         "light-rain": "🌧️",
         "thunderstorm": "⛈️",
